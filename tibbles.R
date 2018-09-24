@@ -262,3 +262,14 @@ tbl
 set_tidy_names(tbl)
 
 tidy_names("a b", syntactic = TRUE)
+
+
+
+# tbl_sum
+# tbl_sum() gives a brief textual description of a table-like object, which should include the dimensions,
+# the data source, and possible grouping (for dplyr).
+tbl_sum(df)
+df
+df2 <- group_by(df, x)
+df2
+tbl_sum(df2)
