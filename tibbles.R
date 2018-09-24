@@ -7,6 +7,9 @@ library(tibble)
 # never changes an input's type - no more stringsAsFactors = FALSE
 tibble(x = letters)
 
+#data_frame is an alias
+data_frame(x = letters)
+
 # makes it easirer to use with list-columns
 tibble(x = 1:3, y = list(1:5, 1:10, 1:20))
 # List columns are typically created by dplyr::do()
@@ -18,6 +21,9 @@ names(tibble(`crazy name` = 1))
 # it evaluates arguments lazily and sequentially
 tibble(x = 1:5, y = x ^ 2)
 
+# arguments are processed with rlang::quos()
+# and support unquote via !! and unquote-splice via !!!.
+tibble(!!! list(x = rlang::quo(1:10), y = quote(x * 2)))
 
 # it never use row.names(). The whole point of tidy data is to store variables in a consistent way. 
 # So it never stores a variable as special attribute
@@ -207,8 +213,52 @@ is_tibble(1:3)
 
 # new_tibble
 # Creates a subclass of a tibble. 
-#This function is mostly useful for package authors that implement subclasses of a tibble,
+# This function is mostly useful for package authors that implement subclasses of a tibble,
+# new_tibble(x, ..., nrow = NULL, subclass = NULL)
+new_tibble(list(a = 1:3, b = 4:6))
+ndf <- new_tibble(list(), nrow = 150, subclass = "my_tibble")
+ndf <- new_tibble(df, subclass = "my_tibble")
+str(ndf)
+
+
+# rownames
+# While a tibble can have row names (e.g., when converting from a regular data frame), they are removed
+# when subsetting with the [ operator. A warning will be raised when attempting to assign
+# non-NULL row names to a tibble. Generally, it is best to avoid row names, because they are basically
+# a character column with different semantics to every other column.
+has_rownames(mtcars)
+has_rownames(iris)
+has_rownames(remove_rownames(mtcars))
+head(rownames_to_column(mtcars))
+
+mtcars_tbl <- as_tibble(rownames_to_column(mtcars))
+mtcars_tbl
+as_tibble(rowid_to_column(mtcars)) # integer idx, removes rownames
+
+column_to_rownames(as.data.frame(mtcars_tbl))
+
+
+# lst
+# lst() is similar to list(), but like tibble(), it evaluates its arguments lazily and in order, and
+# automatically adds names.
+lst(n = 5, x = runif(n))
+lst(!!! list(n = rlang::quo(2 + 3), y = quote(runif(n))))
 
 
 
+# set_tidy_names() ensures its input has non-missing and unique names (duplicated names get a
+# suffix of the format ..# where # is the position in the vector). Valid names are left unchanged, with
+# the exception that existing suffixes are reorganized.
+# tidy_names() is the workhorse behind set_tidy_names(), it treats the argument as a string to be
+# used to name a data frame or a vector.
+# set_tidy_names(x, syntactic = FALSE, quiet = FALSE)
+# tidy_names(name, syntactic = FALSE, quiet = FALSE)
+set_tidy_names(3:5)
+set_tidy_names(list(3, 4, 5))
+set_tidy_names(mtcars) # left unchanged
 
+tbl <- as_tibble(structure(list(3, 4, 5), class = "data.frame"), validate = FALSE)
+tbl
+set_tidy_names(tbl)
+
+tidy_names("a b", syntactic = TRUE)
